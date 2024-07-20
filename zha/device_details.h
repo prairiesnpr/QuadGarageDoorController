@@ -12,7 +12,7 @@ static attribute door1_attr[] {{0x0000, 0x00, 1, ZCL_BOOL}};
 static attribute door2_attr[] {{0x0000, 0x00, 1, ZCL_BOOL}};
 static attribute door3_attr[] {{0x0000, 0x00, 1, ZCL_BOOL}};
 static attribute door4_attr[] {{0x0000, 0x00, 1, ZCL_BOOL}};
-static attribute temp_attr[] = {{0x0000, 0x00, 1, ZCL_UINT16_T}};
+static attribute temp_attr[] = {{0x0000, 0x00, 2, ZCL_UINT16_T}};
 
 static Cluster door1_in_clusters[] = {Cluster(BASIC_CLUSTER_ID, door1_basic_attr, 2), Cluster(ON_OFF_CLUSTER_ID, door1_attr, 1)};
 static Cluster door2_in_clusters[] = {Cluster(BASIC_CLUSTER_ID, door2_basic_attr, 2), Cluster(ON_OFF_CLUSTER_ID, door2_attr, 1)};

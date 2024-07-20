@@ -12,6 +12,14 @@
 #define TEMP_BUS 5
 #define XBEE_RST 4
 
+// Define SoftSerial TX/RX pins
+// Connect Arduino pin 10 to TX of usb-serial device
+#define ssRX 10
+// Connect Arduino pin 11 to RX of usb-serial device
+#define ssTX 11
+
+#define TEMP_ENDPOINT 5
+
 static uint8_t DOOR_OUT_PINS[] =  {12, 13, A0, A1};
 static uint8_t DOOR_IN_PINS[] =  {9, 8, 7, 6};
 
@@ -37,11 +45,7 @@ bool assc_pending = 0;
 bool *cmd_result;
 bool awt_announce = 0;
 
-// Define SoftSerial TX/RX pins
-// Connect Arduino pin 10 to TX of usb-serial device
-#define ssRX 10
-// Connect Arduino pin 11 to RX of usb-serial device
-#define ssTX 11
+uint8_t t_value[2] = {0x00, 0x00}; 
 
 SoftwareSerial nss(ssRX, ssTX);
 
@@ -68,6 +72,22 @@ void setup() {
   Serial.print(sensors.getDeviceCount(), DEC);
   Serial.println(F(" Temp Dev."));
 
+  bool success = sensors.getAddress(devThermometer, 0);
+
+  if (success)
+  { 
+    Serial.print(F("Dev Addr: "));
+    for(int i;i<sizeof(devThermometer);i++)
+    {
+      Serial.print(devThermometer[i]);
+      Serial.print(" ");
+    }
+    Serial.println();
+  }
+  else
+  {
+    Serial.println(F("T Dev Addr Fail"));
+  }
   sensors.setResolution(devThermometer, 9);
   Serial.println(F("Res Set, Dly St"));
   delay(5000);
@@ -83,43 +103,55 @@ void setup() {
   Serial.print(F("LCL Add: "));
   printAddr(macAddr.Get());
 
-  timer.every(30000, update_temp); 
+  timer.every(30000, update_sensors); 
 }
 
+bool read_temp(DeviceAddress thermometer, uint8_t *t_value)
+{
+  bool success = sensors.requestTemperaturesByAddress(thermometer);
 
-//Update temp, serial for now
-bool  update_temp(void *) {
-  uint8_t t_ep_id = 5;
-  
-  //sensors.requestTemperatures();
-  sensors.requestTemperaturesByIndex(0);
-  float TempC = sensors.getTempCByIndex(0);
-  //float TempC = sensors.getTempC(devThermometer);
-
-  Serial.print(F("Dev Temp: "));
-  Serial.print(TempC);
-  Serial.println(F(" °C"));
-  if (TempC == -127.0)
+  if (!success)
   {
-    Serial.println(F("Lost Temp"));
+    Serial.println(F("T addr not found"));
   }
 
+  delay(10); //No idea why this is needed
 
-  if (TempC < 200 && TempC > -100){
-    //Seeing some 900 deg readings, just filtering them out
-    Endpoint end_point = GetEndpoint(t_ep_id);
+  float TempC = sensors.getTempC(thermometer);
+  if (TempC == DEVICE_DISCONNECTED_C)
+  {
+    Serial.println(F("T Disconnect"));
+    return false;
+  } 
+
+  Serial.print(F("Temp: "));
+  Serial.print(String(TempC, 2));
+  Serial.println(F("°C"));
+
+  uint16_t cor_t = (uint16_t)(TempC * 100.0);
+  t_value[0] = (uint8_t)cor_t;
+  t_value[1] = (uint8_t)(cor_t >> 8);
+  return true;
+}
+
+void update_temp()
+{
+  //Temp
+  bool r_success = read_temp(devThermometer, t_value);
+
+  if (r_success)
+  { 
+    Endpoint end_point = GetEndpoint(TEMP_ENDPOINT);
     Cluster cluster = end_point.GetCluster(TEMP_CLUSTER_ID);
     attribute* attr = cluster.GetAttr(0x0000);
-    attr->val_len = 2;
-    uint16_t cor_t = (uint16_t)(TempC * 100.0);
-  
-    uint8_t t_value[2] = {(uint8_t)cor_t,
-                          (uint8_t)(cor_t >> 8)
-                         };
     attr->value = t_value;
     sendAttributeRpt(cluster.id, attr, end_point.id, 1);
   }
-  return true;
+}
+
+bool update_sensors(void *) {
+  update_temp();
+  return true; 
 }
 
 void SetAttr(uint8_t ep_id, uint16_t cluster_id, uint16_t attr_id, uint8_t value)
