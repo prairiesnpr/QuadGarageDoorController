@@ -2,6 +2,8 @@ Quad Garage Door Controller.
 
 A ZHA garage door controller that can control up to four garage doors.
 
+Requires: (https://github.com/prairiesnpr/zha_arduino)
+
 Components:
 * 1 - 3.3v dc regulator
 * 1 - 4.7k resistor
