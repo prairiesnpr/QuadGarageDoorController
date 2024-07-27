@@ -185,8 +185,8 @@ void loop()
         Serial.print(F(": "));
         Serial.print(attr->GetIntValue());
         Serial.print(F(" Now "));
-        *attr->value = val;
-        Serial.println(*attr->value);
+        attr->SetValue(val);
+        Serial.println(attr->GetIntValue());
         zha.sendAttributeRpt(cluster.id, attr, end_point.id, 1);
       }
     }
