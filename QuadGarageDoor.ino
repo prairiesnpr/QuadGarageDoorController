@@ -14,10 +14,12 @@
 #define ssTX 11
 
 #define TEMP_ENDPOINT 5
+#define MAX_TEMP_ATTEMPTS 10
 
 #define START_LOOPS 100
 
 uint8_t start_fails = 0;
+uint8_t init_status_sent = 0;
 
 static uint8_t DOOR_OUT_PINS[] = {12, 13, A0, A1};
 static uint8_t DOOR_IN_PINS[] = {9, 8, 7, 6};
@@ -57,12 +59,19 @@ void setup()
   Serial.println(F("Startup"));
   sensors.begin();
   nss.begin(9600);
+  uint8_t temp_attempts = 0;
 
-  Serial.print(F("Found "));
-  Serial.print(sensors.getDeviceCount(), DEC);
-  Serial.println(F(" Temp Dev."));
+  bool success = 0;
+  while (!success && temp_attempts < MAX_TEMP_ATTEMPTS)
+  {
+    Serial.print(F("Found "));
+    Serial.print(sensors.getDeviceCount(), DEC);
+    Serial.println(F(" Temp Dev."));
 
-  bool success = sensors.getAddress(devThermometer, 0);
+    success = sensors.getAddress(devThermometer, 0);
+    temp_attempts++;
+    delay(100);
+  }
 
   if (success)
   {
@@ -73,12 +82,13 @@ void setup()
       Serial.print(" ");
     }
     Serial.println();
+    // We really need this to happen, otherwise get odd results
+    sensors.setResolution(devThermometer, 9);
   }
   else
   {
     Serial.println(F("T Dev Addr Fail"));
   }
-  sensors.setResolution(devThermometer, 9);
 
   zha.Start(nss, zdoReceive, NUM_ENDPOINTS, ENDPOINTS);
 
@@ -140,6 +150,29 @@ bool update_sensors(void *)
   return true;
 }
 
+void update_door_state(uint8_t force)
+{
+  for (int i = 0; i < 4; i++)
+  {
+    uint8_t val = digitalRead(DOOR_IN_PINS[i]) ^ 1;
+    Endpoint end_point = zha.GetEndpoint(i + 1);
+    Cluster cluster = end_point.GetCluster(ON_OFF_CLUSTER_ID);
+    attribute *attr = cluster.GetAttr(CURRENT_STATE);
+
+    if ((val != attr->GetIntValue()) || force)
+    {
+      Serial.print(F("EP"));
+      Serial.print(end_point.id);
+      Serial.print(F(": "));
+      Serial.print(attr->GetIntValue());
+      Serial.print(F(" Now "));
+      attr->SetValue(val);
+      Serial.println(attr->GetIntValue());
+      zha.sendAttributeRpt(cluster.id, attr, end_point.id, 1);
+    }
+  }
+}
+
 void SetAttr(uint8_t ep_id, uint16_t cluster_id, uint16_t attr_id, uint8_t value, uint8_t rqst_seq_id)
 {
   Endpoint end_point = zha.GetEndpoint(ep_id);
@@ -170,24 +203,15 @@ void loop()
 
   if (zha.dev_status == READY)
   {
-    for (int i = 0; i < 4; i++)
+    if (!init_status_sent)
     {
-      uint8_t val = digitalRead(DOOR_IN_PINS[i]) ^ 1;
-      Endpoint end_point = zha.GetEndpoint(i + 1);
-      Cluster cluster = end_point.GetCluster(ON_OFF_CLUSTER_ID);
-      attribute *attr = cluster.GetAttr(CURRENT_STATE);
-
-      if (val != attr->GetIntValue())
-      {
-        Serial.print(F("EP"));
-        Serial.print(end_point.id);
-        Serial.print(F(": "));
-        Serial.print(attr->GetIntValue());
-        Serial.print(F(" Now "));
-        attr->SetValue(val);
-        Serial.println(attr->GetIntValue());
-        zha.sendAttributeRpt(cluster.id, attr, end_point.id, 1);
-      }
+      Serial.println(F("Snd Init States"));
+      update_door_state(0x01);
+      init_status_sent = 1;
+    }
+    else
+    {
+      update_door_state(0x00);
     }
   }
   else if ((loop_time - last_msg_time) > 1000)

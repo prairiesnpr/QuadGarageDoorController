@@ -2,7 +2,7 @@
     "configuration": "cpu=8MHzatmega328",
     "board": "arduino:avr:pro",
     "programmer": "avrisp",
-    "port": "COM4",
+    "port": "COM7",
     "output": "../build",
     "sketch": "QuadGarageDoor.ino"
 }
