@@ -1,6 +1,5 @@
 #include <SoftwareSerial.h>
 #include <arduino-timer.h>
-#include <EEPROM.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <avr/wdt.h>
@@ -129,7 +128,7 @@ void update_temp()
   {
     Endpoint end_point = zha.GetEndpoint(TEMP_ENDPOINT);
     Cluster cluster = end_point.GetCluster(TEMP_CLUSTER_ID);
-    attribute *attr = cluster.GetAttr(0x0000);
+    attribute *attr = cluster.GetAttr(CURRENT_STATE);
     attr->SetValue(res_temp);
     zha.sendAttributeRpt(cluster.id, attr, end_point.id, 1);
   }
@@ -176,7 +175,7 @@ void loop()
       uint8_t val = digitalRead(DOOR_IN_PINS[i]) ^ 1;
       Endpoint end_point = zha.GetEndpoint(i + 1);
       Cluster cluster = end_point.GetCluster(ON_OFF_CLUSTER_ID);
-      attribute *attr = cluster.GetAttr(0x0000);
+      attribute *attr = cluster.GetAttr(CURRENT_STATE);
 
       if (val != attr->GetIntValue())
       {
@@ -251,12 +250,12 @@ void zdoReceive(ZBExplicitRxResponse &erx, uintptr_t)
           if (cmd_id == 0x00)
           {
             Serial.println(F("Cmd Off"));
-            SetAttr(ep, erx.getClusterId(), 0x0000, 0x00, erx.getFrameData()[erx.getDataOffset() + 1]);
+            SetAttr(ep, erx.getClusterId(), CURRENT_STATE, cmd_id, erx.getFrameData()[erx.getDataOffset() + 1]);
           }
           else if (cmd_id == 0x01)
           {
             Serial.println(F("Cmd On"));
-            SetAttr(ep, erx.getClusterId(), 0x0000, 0x01, erx.getFrameData()[erx.getDataOffset() + 1]);
+            SetAttr(ep, erx.getClusterId(), CURRENT_STATE, cmd_id, erx.getFrameData()[erx.getDataOffset() + 1]);
           }
           else
           {
