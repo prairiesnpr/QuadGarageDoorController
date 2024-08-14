@@ -49,11 +49,11 @@ attribute door4_basic_attr[]{
     manuf_attr,
     door4_model_attr};
 
-attribute door1_attr[] = {{CURRENT_STATE, one_zero_byte, 1, ZCL_BOOL}};
-attribute door2_attr[] = {{CURRENT_STATE, one_zero_byte, 1, ZCL_BOOL}};
-attribute door3_attr[] = {{CURRENT_STATE, one_zero_byte, 1, ZCL_BOOL}};
-attribute door4_attr[] = {{CURRENT_STATE, one_zero_byte, 1, ZCL_BOOL}};
-attribute temp_attr[] = {{CURRENT_STATE, two_zero_byte, 2, ZCL_INT16_T}};
+attribute door1_attr[] = {{CURRENT_STATE, const_cast<uint8_t *>(one_zero_byte), 1, ZCL_BOOL}};
+attribute door2_attr[] = {{CURRENT_STATE, const_cast<uint8_t *>(one_zero_byte), 1, ZCL_BOOL}};
+attribute door3_attr[] = {{CURRENT_STATE, const_cast<uint8_t *>(one_zero_byte), 1, ZCL_BOOL}};
+attribute door4_attr[] = {{CURRENT_STATE, const_cast<uint8_t *>(one_zero_byte), 1, ZCL_BOOL}};
+attribute temp_attr[] = {{CURRENT_STATE, const_cast<uint8_t *>(two_zero_byte), 2, ZCL_INT16_T}};
 
 
 static Cluster door1_in_clusters[] = {
