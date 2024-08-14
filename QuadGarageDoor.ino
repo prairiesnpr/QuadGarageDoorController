@@ -211,7 +211,7 @@ void SetAttr(uint8_t ep_id, uint16_t cluster_id, uint16_t attr_id, uint8_t value
       Serial.print(F("Toggle: "));
       Serial.println(end_point.id);
       digitalWrite(DOOR_OUT_PINS[end_point.id - 1], HIGH);
-      zha.sendAttributeWriteRsp(cluster_id, attr, ep_id, 1, value, zha.cmd_seq_id); // Tell sender that we did what we were told to
+      zha.sendAttributeCmdRsp(cluster_id, attr, ep_id, 1, value, zha.cmd_seq_id); // Tell sender that we did what we were told to
       delay(2000);
       digitalWrite(DOOR_OUT_PINS[end_point.id - 1], LOW);
     }
