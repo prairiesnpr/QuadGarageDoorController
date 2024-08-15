@@ -159,7 +159,8 @@ void update_temp()
   {
     Endpoint end_point = zha.GetEndpoint(TEMP_ENDPOINT);
     Cluster cluster = end_point.GetCluster(TEMP_CLUSTER_ID);
-    attribute *attr = cluster.GetAttr(CURRENT_STATE);
+    attribute *attr;
+    uint8_t attr_exists = cluster.GetAttr(&attr, CURRENT_STATE);
     attr->SetValue(res_temp);
     zha.sendAttributeRpt(cluster.id, attr, end_point.id, 1);
   }
@@ -178,7 +179,8 @@ void update_door_state(uint8_t force)
     uint8_t val = digitalRead(DOOR_IN_PINS[i]) ^ 1;
     Endpoint end_point = zha.GetEndpoint(i + 1);
     Cluster cluster = end_point.GetCluster(ON_OFF_CLUSTER_ID);
-    attribute *attr = cluster.GetAttr(CURRENT_STATE);
+    attribute *attr;
+    uint8_t attr_exists = cluster.GetAttr(&attr, CURRENT_STATE);
 
     if ((val != attr->GetIntValue(0x00)) || force)
     {
@@ -198,7 +200,8 @@ void SetAttr(uint8_t ep_id, uint16_t cluster_id, uint16_t attr_id, uint8_t value
 {
   Endpoint end_point = zha.GetEndpoint(ep_id);
   Cluster cluster = end_point.GetCluster(cluster_id);
-  attribute *attr = cluster.GetAttr(attr_id);
+  attribute *attr;
+  uint8_t attr_exists = cluster.GetAttr(&attr, attr_id);
 
   Serial.print("Clstr: ");
   Serial.println(cluster_id, HEX);
