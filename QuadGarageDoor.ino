@@ -12,11 +12,12 @@
 #define ssRX 10
 #define ssTX 11
 
-#define DOOR1_ENDPOINT 1
-#define DOOR2_ENDPOINT 2
-#define DOOR3_ENDPOINT 3
-#define DOOR4_ENDPOINT 4
-#define TEMP_ENDPOINT 5
+#define BASIC_ENDPOINT 1
+#define DOOR1_ENDPOINT 2
+#define DOOR2_ENDPOINT 3
+#define DOOR3_ENDPOINT 4
+#define DOOR4_ENDPOINT 5
+#define TEMP_ENDPOINT 6
 #define MAX_TEMP_ATTEMPTS 10
 
 #define START_LOOPS 100
@@ -177,7 +178,7 @@ void update_door_state(uint8_t force)
   for (uint8_t i = 0; i < 4; i++)
   {
     uint8_t val = digitalRead(DOOR_IN_PINS[i]) ^ 1;
-    Endpoint end_point = zha.GetEndpoint(i + 1);
+    Endpoint end_point = zha.GetEndpoint(i + 2);
     Cluster cluster = end_point.GetCluster(ON_OFF_CLUSTER_ID);
     attribute *attr;
     uint8_t attr_exists = cluster.GetAttr(&attr, CURRENT_STATE);
@@ -252,7 +253,7 @@ void loop()
     Serial.println(START_LOOPS);
 
     last_msg_time = millis();
-    if (start_fails > 15)
+    if (start_fails == 15)
     {
       // Sometimes we don't get a response from dev ann, try a transmit and see if we are good
       update_door_state(0x01);
